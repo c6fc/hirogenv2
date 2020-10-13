@@ -1,0 +1,28 @@
+{
+  "name": "hirogen",
+  "version": "1.0.0",
+  "description": "Command line tool for interacting with AWS Cognito",
+  "main": "bin/main.js",
+  "bin": {
+    "hirogen": "./bin/main.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "Cognito",
+    "Pentesting"
+  ],
+  "author": "Brad Woodward (brad@bradwoodward.io)",
+  "license": "MIT",
+  "dependencies": {
+    "amazon-cognito-identity-js": "^3.2.5",
+    "aws-sdk": "^2.600.0",
+    "cli-progress": "^3.8.0",
+    "colors": "^1.4.0",
+    "node-fetch": "^2.6.0",
+    "puppeteer": "^2.1.1",
+    "yargs": "^15.1.0"
+  },
+  "devDependencies": {}
+}
