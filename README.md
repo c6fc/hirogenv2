@@ -6,8 +6,8 @@ A federated identity attack tool for AWS Cognito.
 Install the tool
 
 ```sh
-git clone git@github.com:c6fc/hirogen.git
-cd hirogen
+git clone git@github.com:c6fc/hirogenv2.git
+cd hirogenv2
 npm install -g
 ```
 

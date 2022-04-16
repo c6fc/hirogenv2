@@ -5,7 +5,7 @@
 var fs = require('fs');
 var os = require('os');
 var aws = require('aws-sdk');
-var colors = require('colors');
+var colors = require('@colors/colors');
 var { spawnSync } = require('child_process');
 var cognito = require('./includes/cognito.js');
 
@@ -407,7 +407,7 @@ var yargs = require('yargs')
 		.option("domain", {
 			alias: 'd',
 			type: 'string',
-			description: 'The redirect URI to pass to the provider'
+			description: 'The domain to pass to the provider'
 		})
 		.usage('hirogen login-provider <google|amazon|facebook> <provider_appid> [url]')
 	}, async (argv) => {

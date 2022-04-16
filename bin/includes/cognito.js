@@ -115,10 +115,21 @@ expose.initiateAuth = function(clientId, userpoolid, username, password, authflo
                      },
 
                      newPasswordRequired: function(userAttributes, requiredAttributes) {
-                        return failure({
+                     	cognitoUser.completeNewPasswordChallenge(password, {}, {
+		                     onSuccess: function() {
+		                        return success(expose.initiateAuth(clientId, userpoolid, username, password, authflow));
+		                     },
+
+		                     onFailure: function(err) {
+		                        return failure(err);
+		                     },
+
+		                  });
+
+                        /*return failure({
                            code: "ResetRequiredException",
                            message: "You must reset your password before logging on the first time."
-                        });
+                        });*/
                      }
                   });
 			break;
