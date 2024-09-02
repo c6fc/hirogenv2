@@ -197,6 +197,20 @@ expose.getDeveloperIdentityCredential = async function(identityId, token) {
 	});
 }
 
+expose.getOpenIdToken = async function(IdentityPoolId) {
+	const cognito = new aws.CognitoIdentity({region: IdentityPoolId.split(':')[0]});
+
+	return new Promise((success, failure) => {
+		cognito.getOpenIdToken({ IdentityPoolId }, (err, data) => {
+			if (err) {
+				console.log(err);
+				return success(false);
+			}
+			return success(data);
+		})
+	});
+}
+
 expose.getCredentialsForIdentity = async function(identityPoolId, provider, token) {
 	return new Promise((success, failure) => {
 
@@ -258,7 +272,7 @@ expose.getCredentialsForIdentity = async function(identityPoolId, provider, toke
 					delete identity.ResponseMetadata;
 					identity.IdentityId = data.IdentityId;
 
-					success({identity: identity, credentials: data.Credentials});
+					success({ identity, credentials: data.Credentials, region });
 				})
 			});
 		});
