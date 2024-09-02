@@ -2,6 +2,9 @@
 
 'use strict'
 
+// Suppress the AWS SDK v2 deprecation message:
+process.env.AWS_SDK_JS_SUPPRESS_MAINTENANCE_MODE_MESSAGE=1
+
 var fs = require('fs');
 var os = require('os');
 var aws = require('aws-sdk');
